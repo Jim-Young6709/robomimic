@@ -788,6 +788,10 @@ class RNN_MIMO_MLP(Module):
         # use encoder to extract flat rnn inputs
         rnn_inputs = TensorUtils.time_distributed(inputs, self.nets["encoder"], inputs_as_kwargs=True)
         assert rnn_inputs.ndim == 3  # [B, T, D]
+        self.encoded_feats = rnn_inputs
+        num_seqs = rnn_init_state[0].size(1)
+        seq_len = rnn_inputs.size(0) // num_seqs
+        rnn_inputs = rnn_inputs.contiguous().view(num_seqs, seq_len, -1)
         if self.per_step:
             return self.nets["rnn"].forward(inputs=rnn_inputs, rnn_init_state=rnn_init_state, return_state=return_state)
         
