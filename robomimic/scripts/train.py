@@ -48,6 +48,7 @@ import torch.distributed as dist
 import torch.nn as nn
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 import h5py
+from neural_mp.envs.franka_pybullet_env import decompose_scene_pcd_params_obs_batched, compute_scene_pcd_params_batched
 
 class SubprocVecEnvWrapper(SubprocVecEnv):
     def env_method_pass_idx(self, method_name: str, *method_args, indices = None, **method_kwargs):
@@ -86,6 +87,48 @@ def make_env(env_meta, use_images, render_video, pcd_params, mpinets_enabled, da
         config.update(ext_cfg)
     env = EnvUtils.wrap_env_from_config(env, config=config) # apply environment warpper, if applicable
     return env
+
+def collate_fn_saved_params(batch_list):
+    """
+    Hardcode for now to get things working.
+    """
+
+    # figure out the maximum length for the 'saved_params'
+    max_list = 0
+    for data in batch_list:
+        obs_num = data['obs']['saved_params'][0][14]
+        if obs_num > max_list:
+            max_list = obs_num
+    max_list = int(max_list)
+
+    output_batch = {}
+    output_batch['actions'] = torch.stack([torch.from_numpy(elem['actions']) for elem in batch_list], dim=0)
+    output_batch['obs'] = {}
+    output_batch['obs']['current_angles'] = torch.stack([torch.from_numpy(elem['obs']['current_angles']) for elem in batch_list], dim=0)
+    output_batch['obs']['goal_angles'] = torch.stack([torch.from_numpy(elem['obs']['goal_angles']) for elem in batch_list], dim=0)
+    output_batch['obs']['compute_pcd_params'] = torch.stack([torch.from_numpy(elem['obs']['compute_pcd_params']) for elem in batch_list], dim=0)
+
+    for elem in batch_list:
+        data = torch.from_numpy(elem['obs']['saved_params'].copy())
+        scene_pcd_params = data[:, 14:]
+        cuboid_dims, cuboid_centers, cuboid_quats, cylinder_radii, cylinder_heights, cylinder_centers, cylinder_quats, sphere_centers, sphere_radii, M = decompose_scene_pcd_params_obs_batched(scene_pcd_params)
+        scene_pcd_params_padded = compute_scene_pcd_params_batched(
+            max_list,
+            cuboid_dims,
+            cuboid_centers,
+            cuboid_quats,
+            cylinder_radii,
+            cylinder_heights,
+            cylinder_centers,
+            cylinder_quats,
+            sphere_centers,
+            sphere_radii,
+        )
+        elem['obs']['saved_params'] = torch.cat((data[:, :14], scene_pcd_params_padded), dim = 1)
+
+    output_batch['obs']['saved_params'] = torch.stack([elem['obs']['saved_params'] for elem in batch_list], dim=0)
+
+    return output_batch
 
 def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start_from_checkpoint=False, rank=0, world_size=1, ddp=False, dataset_path=None, additional_datasets=None):
     """
@@ -298,6 +341,7 @@ def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start
         batch_size=config.train.batch_size,
         shuffle=(train_sampler is None),
         num_workers=config.train.num_data_workers,
+        collate_fn=collate_fn_saved_params,
         drop_last=True,
         pin_memory=True,
         persistent_workers=True if config.train.num_data_workers > 0 else False,
@@ -318,6 +362,7 @@ def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start
             batch_size=config.train.batch_size,
             shuffle=(valid_sampler is None),
             num_workers=num_workers,
+            collate_fn=collate_fn_saved_params,
             drop_last=True,
             pin_memory=True,
             persistent_workers=True if config.train.num_data_workers > 0 else False,
@@ -492,6 +537,7 @@ def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start
                     batch_size=config.train.batch_size,
                     shuffle=(train_sampler is None),
                     num_workers=config.train.num_data_workers,
+                    collate_fn=collate_fn_saved_params,
                     drop_last=True,
                     pin_memory=True,
                     persistent_workers=True if config.train.num_data_workers > 0 else False,
@@ -503,6 +549,7 @@ def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start
                     batch_size=config.train.batch_size,
                     shuffle=(valid_sampler is None),
                     num_workers=num_workers,
+                    collate_fn=collate_fn_saved_params,
                     drop_last=True,
                     pin_memory=True,
                     persistent_workers=True if config.train.num_data_workers > 0 else False,
