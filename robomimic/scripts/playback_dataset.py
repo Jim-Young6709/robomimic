@@ -61,7 +61,7 @@ import h5py
 import argparse
 import imageio
 import numpy as np
-from neural_mp.envs.franka_pybullet_env import compute_full_pcd
+from neural_mp.utils.pcd_utils import compute_full_pcd, depth_to_rgb
 
 from robomimic.envs.env_mp import render_pointcloud
 import robomimic.utils.obs_utils as ObsUtils
@@ -69,7 +69,6 @@ import robomimic.utils.env_utils as EnvUtils
 import robomimic.utils.file_utils as FileUtils
 from robomimic.envs.env_base import EnvBase, EnvType
 
-from neural_mp.envs.franka_pybullet_env import depth_to_rgb
 
 
 # Define default cameras to use for each env type
