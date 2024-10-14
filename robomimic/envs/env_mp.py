@@ -24,17 +24,6 @@ import torch
 # Util function for loading point clouds|
 import numpy as np
 
-# Data structures and functions for rendering
-from pytorch3d.structures import Pointclouds
-from pytorch3d.renderer import (
-     look_at_view_transform,
-     FoVOrthographicCameras, 
-     PointsRasterizationSettings,
-     PointsRenderer,
-     PointsRasterizer,
-     AlphaCompositor,
- )
-
 from neural_mp.utils.pcd_utils import compute_full_pcd, depth_to_rgb
 import h5py
 

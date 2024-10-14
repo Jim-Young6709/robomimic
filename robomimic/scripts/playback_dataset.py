@@ -78,6 +78,16 @@ DEFAULT_CAMERAS = {
     EnvType.GYM_TYPE: ValueError("No camera names supported for gym type env!"),
     EnvType.MP_TYPE: ["front_image"],
 }
+# Data structures and functions for rendering
+from pytorch3d.structures import Pointclouds
+from pytorch3d.renderer import (
+     look_at_view_transform,
+     FoVOrthographicCameras, 
+     PointsRasterizationSettings,
+     PointsRenderer,
+     PointsRasterizer,
+     AlphaCompositor,
+ )
 
 
 def playback_trajectory_with_env(
@@ -316,6 +326,53 @@ def playback_dataset(args):
     f.close()
     if write_video:
         video_writer.close()
+
+def render_pointcloud(pcd):
+    device = torch.device("cuda:0")
+    torch.cuda.set_device(device)
+    verts = torch.Tensor(pcd[:, :3]).to(device)
+
+    rgb_pcd = pcd[:, 3]
+    rgb_pcd = rgb_pcd.reshape(-1, 1)
+    # convert each rgb value to a different color
+    # 0 -> red (255, 0, 0)
+    # 1 -> green (0, 255, 0)
+    # 2 -> blue (0, 0, 255)
+    rgb_pcd = np.concatenate((rgb_pcd, rgb_pcd, rgb_pcd), axis=1)
+    rgb_pcd = np.where(rgb_pcd == np.array([0, 0, 0]), np.array([255, 0, 0]), rgb_pcd)
+    rgb_pcd = np.where(rgb_pcd == np.array([1, 1, 1]), np.array([0, 255, 0]), rgb_pcd)
+    rgb_pcd = np.where(rgb_pcd == np.array([2, 2, 2]), np.array([0, 0, 255]), rgb_pcd)
+
+    rgb_pcd = rgb_pcd * 255
+    rgb = torch.Tensor(rgb_pcd).to(device)
+
+    point_cloud = Pointclouds(points=[verts], features=[rgb])
+
+    # Initialize a camera.
+    R, T = look_at_view_transform(1, 0, 90, up=((1, 0, 0),))
+    cameras = FoVOrthographicCameras(device=device, R=R, T=T, znear=0.01)
+
+    # Define the settings for rasterization and shading. Here we set the output image to be of size
+    # 512x512. As we are rendering images for visualization purposes only we will set faces_per_pixel=1
+    # and blur_radius=0.0. Refer to raster_points.py for explanations of these parameters. 
+    raster_settings = PointsRasterizationSettings(
+        image_size=512, 
+        # radius = 0.003,
+        points_per_pixel = 10
+    )
+
+
+    # Create a points renderer by compositing points using an alpha compositor (nearer points
+    # are weighted more heavily). See [1] for an explanation.
+    rasterizer = PointsRasterizer(cameras=cameras, raster_settings=raster_settings)
+    renderer = PointsRenderer(
+        rasterizer=rasterizer,
+        compositor=AlphaCompositor()
+    )
+
+    images = renderer(point_cloud)
+    img = images[0, ..., :3].cpu().numpy()
+    return img
 
 
 if __name__ == "__main__":
