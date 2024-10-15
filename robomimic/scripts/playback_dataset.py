@@ -61,6 +61,7 @@ import h5py
 import argparse
 import imageio
 import numpy as np
+import torch
 from neural_mp.utils.pcd_utils import compute_full_pcd, depth_to_rgb
 
 from robomimic.envs.env_mp import render_pointcloud
