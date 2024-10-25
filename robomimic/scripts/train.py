@@ -212,7 +212,7 @@ def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start
 
             for env_name in env_names:
                 pcd_params = config.experiment.pcd_params.to_dict()
-                mpinets_enabled = config.algo.mpinets.enabled
+                mpinets_enabled = False #config.algo.mpinets.enabled
                 render_video = config.experiment.render_video
                 # save config 
                 config_path = os.path.join(log_dir, 'config.json')
