@@ -12,7 +12,7 @@
         "save": {
             "enabled": true,
             "every_n_seconds": null,
-            "every_n_epochs": 250,
+            "every_n_epochs": 500,
             "epochs": [],
             "on_best_validation": false,
             "on_best_rollout_return": false,
@@ -25,12 +25,12 @@
         "render": false,
         "render_video": true,
         "keep_all_videos": true,
-        "video_skip": 1,
+        "video_skip": 5,
         "rollout": {
             "enabled": true,
             "n": 25,
             "horizon": 150,
-            "rate": 250,
+            "rate": 500,
             "warmstart": 0,
             "terminate_on_success": true
         },
@@ -62,7 +62,7 @@
         "goal_mode": null,
         "cuda": true,
         "batch_size": 16,
-        "num_epochs": 10000,
+        "num_epochs": 100000,
         "seed": 1
     },
     "algo": {
