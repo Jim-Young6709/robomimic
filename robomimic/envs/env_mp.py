@@ -5,7 +5,6 @@ with metadata present in datasets.
 """
 from collections import OrderedDict
 import traceback
-import gym
 import json
 from copy import deepcopy
 
