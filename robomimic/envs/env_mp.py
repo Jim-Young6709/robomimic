@@ -367,7 +367,7 @@ class EnvMP(EB.EnvBase, gymnasium.Env):
         assert np.all(self.env.get_state() == state["states"])
         return self.get_observation(self.env.get_observation())
 
-    def render(self, mode="rgb_array", height=512, width=512, camera_name=None, **kwargs):
+    def render(self, mode="rgb_array", height=512, width=512, camera_name="front", **kwargs):
         """
         Render from simulation to either an on-screen window or off-screen to RGB array.
 
@@ -380,7 +380,7 @@ class EnvMP(EB.EnvBase, gymnasium.Env):
             return self.env.render(mode=mode, **kwargs)
         if mode == "rgb_array" or mode is None:
             return self.env.get_alpha_blended_target_img(
-                        self.env.goal_mask, self.env.goal_img
+                        self.env.goal_mask, self.env.goal_img, camera_name=camera_name
                     )[:, :, ::-1]
         else:
             raise NotImplementedError("mode={} is not implemented".format(mode))
