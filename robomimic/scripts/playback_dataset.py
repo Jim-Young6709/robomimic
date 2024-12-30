@@ -437,9 +437,9 @@ if __name__ == "__main__":
     # camera names to render, or image observations to use for writing to video
     parser.add_argument(
         "--render_image_names",
-        type=str,
+        type=list,
         nargs='+',
-        default=None,
+        default=["back"],
         help="(optional) camera name(s) / image observation(s) to use for rendering on-screen or to video. Default is"
              "None, which corresponds to a predefined camera for each env type",
     )
