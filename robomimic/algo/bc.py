@@ -775,6 +775,7 @@ class BC_RNN_GMM(BC_RNN):
         
         predictions = OrderedDict(
             log_probs=log_probs,
+            dists_means=dists.mean,
             actions=dists.sample(),
         )
         return predictions
@@ -795,8 +796,11 @@ class BC_RNN_GMM(BC_RNN):
         losses = OrderedDict()
         a_target = batch["actions"]
         actions = predictions["actions"]
+        dists_means = predictions["dists_means"]
         # loss is just negative log-likelihood of action targets
         action_loss = -predictions["log_probs"].mean()
+        losses["dists_means_l2_loss"] = nn.MSELoss()(dists_means, a_target)
+        losses["dists_means_l1_loss"] = nn.SmoothL1Loss()(dists_means, a_target)
         losses["l2_loss"] = nn.MSELoss()(actions, a_target)
         losses["l1_loss"] = nn.SmoothL1Loss()(actions, a_target)
         # cosine direction loss on eef delta position
