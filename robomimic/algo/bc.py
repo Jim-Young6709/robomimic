@@ -680,7 +680,7 @@ class BC_RNN(BC):
         # this minimizes the amount of data transferred to GPU
         return TensorUtils.to_float(TensorUtils.to_device(input_batch, self.device))
 
-    def get_action(self, obs_dict, goal_dict=None):
+    def get_action(self, obs_dict, goal_dict=None, mean_actions=False):
         """
         Get policy action outputs.
 
@@ -709,7 +709,7 @@ class BC_RNN(BC):
 
         self._rnn_counter += 1
         action, self._rnn_hidden_state = self.nets['policy']('step', 
-            obs_to_use, goal_dict=goal_dict, rnn_state=self._rnn_hidden_state)
+            obs_to_use, goal_dict=goal_dict, rnn_state=self._rnn_hidden_state, mean_actions=mean_actions)
         return action
 
     def reset(self):

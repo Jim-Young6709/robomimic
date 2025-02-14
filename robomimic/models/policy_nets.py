@@ -899,7 +899,7 @@ class RNNGMMActorNetwork(RNNActorNetwork):
         else:
             return dists
 
-    def forward(self, obs_dict, goal_dict=None, rnn_init_state=None, return_state=False):
+    def forward(self, obs_dict, goal_dict=None, rnn_init_state=None, return_state=False, mean_actions=False):
         """
         Samples actions from the policy distribution.
 
@@ -913,7 +913,10 @@ class RNNGMMActorNetwork(RNNActorNetwork):
         out = self.forward_train(obs_dict=obs_dict, goal_dict=goal_dict, rnn_init_state=rnn_init_state, return_state=return_state)
         if return_state:
             ad, state = out
-            return ad.sample(), state
+            if mean_actions:
+                return ad.mean, state
+            else:
+                return ad.sample(), state
         return out.sample()
 
     def forward_train_step(self, obs_dict, goal_dict=None, rnn_state=None):
@@ -952,7 +955,7 @@ class RNNGMMActorNetwork(RNNActorNetwork):
         )
         return ad, state
 
-    def forward_step(self, obs_dict, goal_dict=None, rnn_state=None):
+    def forward_step(self, obs_dict, goal_dict=None, rnn_state=None, mean_actions=False):
         """
         Unroll RNN over single timestep to get sampled actions.
 
@@ -968,7 +971,7 @@ class RNNGMMActorNetwork(RNNActorNetwork):
         """
         obs_dict = TensorUtils.to_sequence(obs_dict)
         acts, state = self.forward(
-            obs_dict, goal_dict, rnn_init_state=rnn_state, return_state=True)
+            obs_dict, goal_dict, rnn_init_state=rnn_state, return_state=True, mean_actions=mean_actions)
         assert acts.shape[1] == 1
         return acts[:, 0], state
 
