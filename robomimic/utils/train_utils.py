@@ -28,7 +28,6 @@ from robomimic.envs.env_base import EnvBase
 from robomimic.envs.wrappers import EnvWrapper
 from robomimic.algo import RolloutPolicy
 from tqdm import tqdm
-from stable_baselines3.common.vec_env.subproc_vec_env import _flatten_obs
 
 
 def get_exp_dir(config, auto_remove_exp_dir=False):
