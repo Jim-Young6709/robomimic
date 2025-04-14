@@ -538,7 +538,7 @@ def train(config, device, ckpt_path=None, ckpt_dict=None, output_dir=None, start
                 # wrap model as a RolloutPolicy to prepare for rollouts
                 rollout_model = RolloutPolicy(model, obs_normalization_stats=obs_normalization_stats)
 
-                num_episodes = config.experiment.rollout.n
+                num_episodes = min(config.experiment.rollout.n, 5) # no more than 5 rollouts, this takes too much time
                 all_rollout_logs, video_paths = TrainUtils.rollout_with_stats(
                     policy=rollout_model,
                     envs=envs,
