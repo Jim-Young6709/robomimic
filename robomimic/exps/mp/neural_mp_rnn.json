@@ -28,7 +28,7 @@
         "video_skip": 5,
         "rollout": {
             "enabled": true,
-            "n": 25,
+            "n": 5,
             "horizon": 150,
             "rate": 500,
             "warmstart": 0,
